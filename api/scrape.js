@@ -1,9 +1,10 @@
-// 改善版の api/scrape.js
+// デバッグモード付きの最終版 api/scrape.js
 const axios = require('axios');
 const cheerio = require('cheerio');
 
 module.exports = async (req, res) => {
-  const { url } = req.query;
+  // "debug"というパラメータも受け取れるようにする
+  const { url, debug } = req.query; 
 
   if (!url) {
     return res.status(400).json({ error: 'URL is required' });
@@ -17,26 +18,25 @@ module.exports = async (req, res) => {
       }
     });
 
+    // ★デバッグモードの処理を追加★
+    // URLの最後に &debug=true を付けると、ここの処理が動く
+    if (debug === 'true') {
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      return res.status(200).send(html); // HTMLをそのままテキストとして返す
+    }
+
+    // --- 通常のスクレイピング処理 ---
     const $ = cheerio.load(html);
 
-    // --- 目印（セレクタ）を改善 ---
-    // 物件名：より具体的に狙う
     const propertyName = $('.property_main-title').text().trim();
-
-    // 家賃：複数の候補を探す
     let price = $('.property_view_note-emphasis').first().text().trim();
     if (!price) {
       price = $('th:contains("賃料")').next().text().trim();
     }
-
-    // 所在地：これもテーブルから探す
     const address = $('th:contains("所在地")').next('td').text().trim();
-
-    // 画像URL：より具体的に狙う
     const mainImage = $('.property_view_object-img img').attr('src');
 
-    // 抜き出した情報をJSON形式で返す
-    res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate'); // キャッシュを短く
+    res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate');
     res.status(200).json({
       name: propertyName || '取得できませんでした',
       price: price || '取得できませんでした',

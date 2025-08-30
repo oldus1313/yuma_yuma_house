@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物件探しアプリ</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Hiragino Kaku Gothic ProN', 'Hiragino Sans', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.9;
+            font-size: 1.1rem;
+        }
+
+        .tabs {
+            display: flex;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            background: none;
+            border: none;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+        }
+
+        .tab:hover:not(.active) {
+            background: #e9ecef;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 30px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .add-form {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+        }
+
+        input[type="url"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        input[type="url"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            transform: none;
+            cursor: not-allowed;
+        }
+
+        .properties-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .property-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .property-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        .property-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: #f8f9fa;
+        }
+
+        .property-info {
+            padding: 20px;
+        }
+
+        .property-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #212529;
+            line-height: 1.4;
+        }
+
+        .property-details {
+            display: grid;
+            gap: 10px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 600;
+            color: #6c757d;
+            min-width: 80px;
+        }
+
+        .detail-value {
+            color: #495057;
+            text-align: right;
+            font-weight: 500;
+        }
+
+        .property-actions {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            border-radius: 6px;
+            text-decoration: none;
+            color: white;
+            background: #667eea;
+            transition: background 0.2s ease;
+        }
+
+        .btn-small:hover {
+            background: #5a67d8;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .status-検討中 { background: #e3f2fd; color: #1976d2; }
+        .status-内見予定 { background: #f3e5f5; color: #7b1fa2; }
+        .status-保留 { background: #fff3e0; color: #f57c00; }
+        .status-除外 { background: #ffebee; color: #d32f2f; }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6c757d;
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .properties-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏠 物件探しアシスタント</h1>
+            <p>SUUMOのURLから物件情報を自動抽出・管理</p>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('add')">物件を追加</button>
+            <button class="tab" onclick="switchTab('list')">物件一覧</button>
+        </div>
+
+        <div id="add-tab" class="tab-content active">
+            <div class="add-form">
+                <h2 style="margin-bottom: 20px; color: #495057;">新しい物件を追加</h2>
+                <div id="add-message"></div>
+                
+                <div class="form-group">
+                    <label for="property-url">SUUMOの物件URL</label>
+                    <input type="url" id="property-url" placeholder="https://suumo.jp/chintai/...">
+                </div>
+                
+                <button class="btn" onclick="addProperty()" id="add-btn">
+                    物件情報を抽出・追加
+                </button>
+            </div>
+        </div>
+
+        <div id="list-tab" class="tab-content">
+            <h2 style="margin-bottom: 20px; color: #495057;">保存された物件</h2>
+            <div id="properties-container">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <div>物件リストを読み込み中...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // アプリケーションの状態管理
+        let properties = JSON.parse(localStorage.getItem('properties') || '[]');
+        let currentTab = 'add';
+
+        // ページ読み込み時の初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            loadProperties();
+        });
+
+        // タブ切り替え機能
+        function switchTab(tabName) {
+            // タブボタンの状態更新
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`[onclick="switchTab('${tabName}')"]`).classList.add('active');
+
+            // タブコンテンツの表示切り替え
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            currentTab = tabName;
+
+            // 一覧タブに切り替えた時に最新データを表示
+            if (tabName === 'list') {
+                displayProperties();
+            }
+        }
+
+        // 物件追加機能（手動入力版）
+        async function addProperty() {
+            const urlInput = document.getElementById('property-url');
+            const url = urlInput.value.trim();
+            const addBtn = document.getElementById('add-btn');
+
+            // バリデーション
+            if (!url) {
+                showMessage('URLを入力してください。', 'error');
+                return;
+            }
+
+            if (!url.includes('suumo.jp')) {
+                showMessage('SUUMOのURLを入力してください。', 'error');
+                return;
+            }
+
+            // 重複チェック
+            if (properties.some(p => p.url === url)) {
+                showMessage('この物件は既に登録されています。', 'error');
+                return;
+            }
+
+            // 手動入力フォームを表示
+            showPropertyForm(url);
+        }
+
+        // 物件情報手動入力フォーム
+        function showPropertyForm(url) {
+            const formHtml = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <h3 style="margin-bottom: 15px;">物件情報を入力してください</h3>
+                    <div style="display: grid; gap: 15px;">
+                        <input type="text" id="manual-name" placeholder="物件名" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <input type="text" id="manual-area" placeholder="エリア（例：新宿区西新宿1-1-1）" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <input type="text" id="manual-rent" placeholder="賃料（例：12.5万円）" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <input type="text" id="manual-layout" placeholder="間取り（例：1LDK）" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <input type="text" id="manual-size" placeholder="面積（例：40.12㎡）" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <input type="text" id="manual-year" placeholder="築年（例：2018年）" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <input type="text" id="manual-walk" placeholder="駅徒歩（例：5分）" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                        <input type="url" id="manual-image" placeholder="画像URL（任意）" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button onclick="saveManualProperty('${url}')" class="btn" style="width: auto; padding: 10px 20px;">保存</button>
+                        <button onclick="cancelForm()" style="padding: 10px 20px; border: 1px solid #ddd; background: white; border-radius: 5px;">キャンセル</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('add-message').innerHTML = formHtml;
+        }
+
+        // 手動入力データを保存
+        function saveManualProperty(url) {
+            const propertyData = {
+                id: Date.now(),
+                name: document.getElementById('manual-name').value || 'unnamed property',
+                area: document.getElementById('manual-area').value || 'N/A',
+                rent: document.getElementById('manual-rent').value || 'N/A',
+                layout: document.getElementById('manual-layout').value || 'N/A',
+                area_size: document.getElementById('manual-size').value || 'N/A',
+                built_year: document.getElementById('manual-year').value || 'N/A',
+                station_walk: document.getElementById('manual-walk').value || 'N/A',
+                image: document.getElementById('manual-image').value || 'https://via.placeholder.com/400x300?text=No+Image',
+                source: 'SUUMO',
+                url: url,
+                createdAt: new Date().toISOString(),
+                status: '検討中'
+            };
+
+            properties.unshift(propertyData);
+            localStorage.setItem('properties', JSON.stringify(properties));
+
+            showMessage(`物件「${propertyData.name}」を追加しました！`, 'success');
+            document.getElementById('property-url').value = '';
+            
+            if (currentTab === 'list') {
+                displayProperties();
+            }
+        }
+
+        // フォームキャンセル
+        function cancelForm() {
+            document.getElementById('add-message').innerHTML = '';
+        }
+
+        // メッセージ表示機能
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('add-message');
+            messageDiv.innerHTML = `<div class="message ${type}">${text}</div>`;
+            
+            setTimeout(() => {
+                if (messageDiv.innerHTML.includes(text)) {
+                    messageDiv.innerHTML = '';
+                }
+            }, 5000);
+        }
+
+        // 物件一覧の読み込み
+        function loadProperties() {
+            properties = JSON.parse(localStorage.getItem('properties') || '[]');
+            displayProperties();
+        }
+
+        // 物件一覧の表示
+        function displayProperties() {
+            const container = document.getElementById('properties-container');
+            
+            if (properties.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 2L2 7v10c0 5.55 3.84 10 9 11 1.16.21 2.34.21 3.5 0 5.16-1 9-5.45 9-11V7l-10-5z"/>
+                        </svg>
+                        <h3>まだ物件が登録されていません</h3>
+                        <p>「物件を追加」タブからSUUMOのURLを追加してください</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const propertyCards = properties.map(property => `
+                <div class="property-card">
+                    <img src="${property.image}" alt="${property.name}" class="property-image" 
+                         onerror="this.src='https://via.placeholder.com/400x300?text=No+Image'">
+                    
+                    <div class="property-info">
+                        <h3 class="property-title">${property.name}</h3>
+                        
+                        <div class="property-details">
+                            <div class="detail-row">
+                                <span class="detail-label">賃料</span>
+                                <span class="detail-value">${property.rent}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">間取り</span>
+                                <span class="detail-value">${property.layout} / ${property.area_size}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">エリア</span>
+                                <span class="detail-value">${property.area}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">築年</span>
+                                <span class="detail-value">${property.built_year}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">駅徒歩</span>
+                                <span class="detail-value">${property.station_walk}</span>
+                            </div>
+                            <div class="detail-row">
+                                <span class="detail-label">ステータス</span>
+                                <span class="detail-value">
+                                    <span class="status-badge status-${property.status}">${property.status}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="property-actions">
+                        <a href="${property.url}" target="_blank" class="btn-small">SUUMOで見る</a>
+                        <button class="btn-small" style="background: #dc3545;" onclick="deleteProperty(${property.id})">削除</button>
+                        <select onchange="updateStatus(${property.id}, this.value)" style="padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+                            <option value="検討中" ${property.status === '検討中' ? 'selected' : ''}>検討中</option>
+                            <option value="内見予定" ${property.status === '内見予定' ? 'selected' : ''}>内見予定</option>
+                            <option value="保留" ${property.status === '保留' ? 'selected' : ''}>保留</option>
+                            <option value="除外" ${property.status === '除外' ? 'selected' : ''}>除外</option>
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+
+            container.innerHTML = `<div class="properties-grid">${propertyCards}</div>`;
+        }
+
+        // 物件削除機能
+        function deleteProperty(id) {
+            if (confirm('この物件を削除しますか？')) {
+                properties = properties.filter(p => p.id !== id);
+                localStorage.setItem('properties', JSON.stringify(properties));
+                displayProperties();
+            }
+        }
+
+        // ステータス更新機能
+        function updateStatus(id, newStatus) {
+            const property = properties.find(p => p.id === id);
+            if (property) {
+                property.status = newStatus;
+                localStorage.setItem('properties', JSON.stringify(properties));
+                displayProperties();
+            }
+        }
+
+        // エンターキーでの送信
+        document.getElementById('property-url').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addProperty();
+            }
+        });
+
+        // CSVエクスポート機能
+        function exportToCSV() {
+            if (properties.length === 0) {
+                alert('エクスポートする物件がありません。');
+                return;
+            }
+
+            const headers = ['物件名', 'エリア', '賃料', '間取り', '面積', '築年', '駅徒歩', 'ステータス', 'URL'];
+            const csvContent = [
+                headers.join(','),
+                ...properties.map(p => [
+                    `"${p.name}"`,
+                    `"${p.area}"`,
+                    `"${p.rent}"`,
+                    `"${p.layout}"`,
+                    `"${p.area_size}"`,
+                    `"${p.built_year}"`,
+                    `"${p.station_walk}"`,
+                    `"${p.status}"`,
+                    `"${p.url}"`
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `物件リスト_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        // CSVエクスポートボタンを一覧タブに追加
+        document.getElementById('list-tab').innerHTML += `
+            <div style="text-align: center; margin-top: 30px;">
+                <button class="btn" onclick="exportToCSV()" style="max-width: 300px;">
+                    CSVでエクスポート
+                </button>
+            </div>
+        `;
+    </script>
+</body>
+</html>
